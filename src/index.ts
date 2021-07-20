@@ -1,12 +1,14 @@
-import {app, BrowserWindow} from 'electron'
-import SerialPort from 'serialport'
+import {app, BrowserWindow} from 'electron';
 
-new SerialPort("COM1")
+
 app.on('ready', () => {
+    app.allowRendererProcessReuse = false;
     new BrowserWindow({
         backgroundColor: "#fff",
         webPreferences: {
-            nodeIntegration: true
+            nodeIntegration: true,
+            webSecurity: false,
+            contextIsolation: false,
         }
-    }).loadFile("resources/index.html")
-})
+    }).loadFile("resources/index.html");
+});

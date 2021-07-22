@@ -97,6 +97,16 @@ class TGAM {
                     return 4;
                 case 0x83:
                     thiz.match(0x24);
+                    let bands = [];
+                    for (let i = 0; i < 8; i++) {
+                        let spectra = 0;
+                        for (let s = 16; s >= 0; s -= 8) {
+                            spectra += thiz.queue.shift()! << s;
+                        }
+                        bands.push(spectra);
+                    }
+                    thiz.fire('spectrum', bands);
+                    return 26;
                 default:
                     throw new Error(`Malformed data stream: unexpected data code ${code}`);
             }

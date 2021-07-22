@@ -25,10 +25,10 @@ class TGAM {
         this.port = new SerialPort(portName, { baudRate: 57600 });
         this.queue = [];
         this.port.on(
-            'data',
-            (incoming: number[]) => this.queue.push(...incoming)
+            'readable', () =>
+            this.queue.push(...Array.from(new Uint8Array(this.port.read() as Buffer)))
         );
-        setInterval(() => this.tick(), 30);
+        setInterval(() => this.tick(), 50);
         this.handlers = {
             poorSignal: [], attention: [], meditation: [],
             blink: [], wave: [], spectrum: []
@@ -36,9 +36,13 @@ class TGAM {
     }
 
     tick() {
-        while (this.queue.length > 0)
-            while (this.sync())
-                this.packet();
+        let oldLength = 0;
+        do {
+            oldLength = this.queue.length;
+            this.sync();
+        } while (oldLength != this.queue.length);
+        while (this.sync())
+            this.packet();
     }
 
     sync(): boolean {
@@ -92,12 +96,12 @@ class TGAM {
                     thiz.fire('blink', thiz.queue.shift()!);
                     return 2;
                 case 0x80:
-                    thiz.match(0x02);
+                    thiz.match(2);
                     const raw = ((thiz.queue.shift()! * 256) + thiz.queue.shift()!);
                     thiz.fire('wave', (raw < 32768 ? raw : raw - 65536) / 32768);
                     return 4;
                 case 0x83:
-                    thiz.match(0x24);
+                    thiz.match(24);
                     let bands = [];
                     for (let i = 0; i < 8; i++) {
                         let spectra = 0;
@@ -113,10 +117,11 @@ class TGAM {
             }
         }
 
-        _sync(); _sync();
+        while (this.queue[0] == 0xAA) _sync();
         let payloadSize = this.queue.shift()!;
         let pointer = 0;
         while (pointer < payloadSize) pointer += _dataRow();
+        this.queue.shift();
     }
 }
 

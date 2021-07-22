@@ -22,7 +22,7 @@ class TGAM {
     queue: number[]
     handlers: TGAMEventHandlers
     constructor(portName: string) {
-        this.port = new SerialPort(portName);
+        this.port = new SerialPort(portName, { baudRate: 57600 });
         this.queue = [];
         this.port.on(
             'data',
@@ -60,6 +60,7 @@ class TGAM {
 
     on<T extends keyof TGAMEventDataTypeMapper>(ev: T, handler: TGAMEventMapper[T]) {
         this.handlers[ev].push(handler as any);
+        return this;
     }
 
     fire<T extends keyof TGAMEventDataTypeMapper>(ev: T, data: TGAMEventDataTypeMapper[T]) {
